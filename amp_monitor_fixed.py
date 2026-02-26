@@ -16,7 +16,7 @@ import certifi
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 WEBSITE_URL = "https://ampcode.com/news/amp-free-is-full-for-now"
-DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1476633592242114694/N-qfb6xzn3NiAQ0AJtSVeey1FcutLvdYNfdY-rKkrZcNPspcmxVw0Oljkj7kGTMSOjsX"
+DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1476670474502275072/XhvGUK1KzYeTmA-eUHX7F3LWeS9H_FN3d6wExgiXWTOaiHgn26IrL0pZ6SVP3NIBe1mz"
 CHECK_INTERVAL = 900  # 15 minutes in seconds
 
 # Try to use certifi certificates, fall back to no verification if needed
