@@ -8,6 +8,8 @@ Sends Discord alert when status changes from FULL to OPEN
 import requests
 import time
 import urllib3
+import signal
+import sys
 from datetime import datetime
 from bs4 import BeautifulSoup
 import certifi
@@ -17,7 +19,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 WEBSITE_URL = "https://ampcode.com/news/amp-free-is-full-for-now"
 DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1476670474502275072/XhvGUK1KzYeTmA-eUHX7F3LWeS9H_FN3d6wExgiXWTOaiHgn26IrL0pZ6SVP3NIBe1mz"
-CHECK_INTERVAL = 900  # 15 minutes in seconds
+CHECK_INTERVAL = 300  # 5 minutes in seconds
 
 # Try to use certifi certificates, fall back to no verification if needed
 USE_SSL_VERIFY = True
@@ -82,6 +84,13 @@ def check_website():
         print(f"✗ Error checking website: {e}")
         return {'success': False, 'error': str(e)}
 
+def shutdown_handler(signum, frame):
+    """Handle shutdown signals gracefully"""
+    sig_name = signal.Signals(signum).name
+    print(f"\n\nReceived signal {sig_name} ({signum}). Shutting down...")
+    send_discord_alert(f"⚠️ AMP Monitor has been stopped. (Signal: {sig_name})")
+    sys.exit(0)
+
 def main():
     """Main monitoring loop"""
     print("=" * 60)
@@ -100,11 +109,11 @@ def main():
         print(f"✓ Current status: {current_status}")
     else:
         print(f"✗ Website connection failed: {test_result.get('error')}")
-        print("  Will retry every 15 minutes...")
+        print("  Will retry every 5 minutes...")
     
     # Send initial test message
     print("\nSending Discord test message...")
-    if send_discord_alert("🤖 AMP Monitor is now active! Checking every 15 minutes for admission changes..."):
+    if send_discord_alert("🤖 AMP Monitor is now active! Checking every 5 minutes for admission changes..."):
         print("✓ Discord webhook working!")
     else:
         print("✗ Discord webhook failed. Check your webhook URL.")
@@ -155,11 +164,13 @@ def main():
         time.sleep(CHECK_INTERVAL)
 
 if __name__ == "__main__":
+    # Register handlers for common termination signals
+    signal.signal(signal.SIGINT, shutdown_handler)   # Ctrl+C
+    signal.signal(signal.SIGTERM, shutdown_handler)  # kill / systemd stop
+    signal.signal(signal.SIGHUP, shutdown_handler)   # terminal closed / hang up
+
     try:
         main()
-    except KeyboardInterrupt:
-        print("\n\nMonitoring stopped by user.")
-        send_discord_alert("⚠️ AMP Monitor has been stopped manually.")
     except Exception as e:
         error_msg = f"❌ AMP Monitor crashed with error: {str(e)}"
         print(error_msg)
